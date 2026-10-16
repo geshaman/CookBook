@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CookBook</string>
+    <string name="recipe_description">Тонкие блинчики с нежной творожной начинкой</string>
+    <string name="tab_ingredients">Ингредиенты</string>
+    <string name="recipe_title">Блины с творогом</string>
+    <string name="role_admin">Админ</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_favorites">Избранное</string>
+    <string name="notice_not_implemented">Функционал пока не реализован</string>
+    <string name="recipe_image_desc">Фото блинов с творогом</string>
+    <string name="cooking_time_minutes">%1$d мин</string>
+    <string name="difficulty_easy">Легко</string>
+    <string name="favorite_toggle">В избранное</string>
+    <string name="share">Поделиться</string>
+    <string name="edit">Изменить</string>
+    <string name="section_description">Описание</string>
+    <string name="tab_steps">Шаги</string>
+    <string name="ingredient_flour">Мука, 200 г.</string>
+    <string name="ingredient_milk">Молоко, 500 мл.</string>
+    <string name="ingredient_eggs">Яйца, 2 шт.</string>
+    <string name="ingredient_cheese">Творог, 300 г.</string>
+    <string name="step_1">Смешайте муку, молоко и яйца до однородного теста</string>
+    <string name="step_2">Обжарьте тонкие блинчики с двух сторон.</string>
+    <string name="step_3">Заверните творог в блинчики.</string>
+    <string name="delete_recipe">Удалить рецепт</string>
+    <string name="delete_dialog_title">Удалить этот рецепт?</string>
+    <string name="delete_dialog_text">Это действие нельзя отменить.</string>
+    <string name="confirm">Удалить</string>
+    <string name="cancel">Отмена</string>
+</resources>
