@@ -28,4 +28,10 @@
     <string name="delete_dialog_text">Это действие нельзя отменить.</string>
     <string name="confirm">Удалить</string>
     <string name="cancel">Отмена</string>
+    <string name="start_cooking">Начать готовить</string>
+    <string name="timer_start">Старт</string>
+    <string name="timer_reset">Сброс</string>
+    <string name="section_ingredients">Ингредиенты</string>
+    <string name="favorites_empty">Список пуст</string>
+    <string name="add_recipe">Add recipe</string>
 </resources>

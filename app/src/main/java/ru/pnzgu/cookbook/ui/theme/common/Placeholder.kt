@@ -1,4 +1,4 @@
-package ru.pnzgu.cookbook
+package ru.pnzgu.cookbook.ui.theme.common
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration

@@ -27,4 +27,10 @@
     <string name="delete_dialog_text">This action cannot be undone.</string>
     <string name="confirm">Delete</string>
     <string name="cancel">Cancel</string>
+    <string name="start_cooking">Start cooking</string>
+    <string name="timer_start">Start</string>
+    <string name="timer_reset">Reset</string>
+    <string name="section_ingredients">Ingredients</string>
+    <string name="favorites_empty">List of favorites is empty</string>
+    <string name="add_recipe">Add recipe</string>
 </resources>

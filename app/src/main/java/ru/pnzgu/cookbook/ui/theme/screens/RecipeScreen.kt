@@ -1,15 +1,46 @@
-package ru.pnzgu.cookbook
+package ru.pnzgu.cookbook.ui.theme.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -17,26 +48,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import ru.pnzgu.cookbook.R
+import ru.pnzgu.cookbook.ui.theme.common.snackbar
 
 @Composable
-fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
-    // --- Состояние экрана (переживает поворот) ---
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    var isFavorite by rememberSaveable { mutableStateOf(false) }
-    var doneSteps by rememberSaveable { mutableStateOf(setOf<Int>()) }
+fun RecipeScreen(
+    isAdmin: Boolean,
+    isFavorite: Boolean,
+    onFavoriteChange: (Boolean) -> Unit,
+    onStartCooking: () -> Unit,
+    onRecipeDeleted: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var checkedIngredients by rememberSaveable { mutableStateOf(setOf<Int>()) }
-    val allChecked = checkedIngredients.size == 
 
     val placeholder = MaterialTheme.snackbar
 
-    val tabs = listOf(R.string.tab_ingredients, R.string.tab_steps)
     val ingredients = listOf(
         R.string.ingredient_flour, R.string.ingredient_milk,
         R.string.ingredient_eggs, R.string.ingredient_cheese
     )
-    val steps = listOf(R.string.step_1, R.string.step_2, R.string.step_3)
-
+    val allChecked = checkedIngredients.size == ingredients.size
 
     Column(
         modifier = modifier
@@ -44,7 +77,7 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // 1. Картинка + кнопка редактирования для админа
+        // Картинка + кнопка редактирования для админа
         Card(modifier = Modifier.fillMaxWidth()) {
             Box {
                 Image(
@@ -58,18 +91,20 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
                 Box(modifier = Modifier.align(Alignment.TopEnd)) {
                     androidx.compose.animation.AnimatedVisibility(visible = isAdmin) {
                         FilledTonalIconButton(onClick = placeholder::notifyPlaceholder) {
-                            Icon(Icons.Filled.Edit,
-                                contentDescription = stringResource(R.string.edit))
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = stringResource(R.string.edit)
+                            )
                         }
                     }
                 }
             }
-
         }
+
         Spacer(Modifier.height(12.dp))
-        // 2. Чипсы времени и сложности, избранное, поделиться
-        Row(verticalAlignment = Alignment.
-        CenterVertically) {
+
+        // Чипсы времени и сложности, поделиться, избранное
+        Row(verticalAlignment = Alignment.CenterVertically) {
             AssistChip(
                 onClick = placeholder::notifyPlaceholder,
                 label = { Text(stringResource(R.string.cooking_time_minutes, 40)) },
@@ -82,10 +117,12 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.weight(1f))
             IconButton(onClick = placeholder::notifyPlaceholder) {
-                Icon(Icons.Filled.Share,
-                    contentDescription = stringResource(R.string.share))
+                Icon(
+                    Icons.Filled.Share,
+                    contentDescription = stringResource(R.string.share)
+                )
             }
-            IconToggleButton(checked = isFavorite, onCheckedChange = { isFavorite = it }) {
+            IconToggleButton(checked = isFavorite, onCheckedChange = onFavoriteChange) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription = stringResource(R.string.favorite_toggle),
@@ -94,8 +131,10 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
                 )
             }
         }
+
         Spacer(Modifier.height(8.dp))
-        // 3. Описание
+
+        // Описание
         SectionHeader(
             title = stringResource(R.string.section_description),
             isAdmin = isAdmin,
@@ -105,53 +144,50 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
             text = stringResource(R.string.recipe_description),
             style = MaterialTheme.typography.bodyLarge
         )
+
         Spacer(Modifier.height(12.dp))
         HorizontalDivider()
-        // 4. Вкладки
-        TabRow(selectedTabIndex = selectedTab) {
-            tabs.forEachIndexed { index, titleRes ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(stringResource(titleRes)) }
-                )
-            }
-        }
-
         Spacer(Modifier.height(16.dp))
 
-        // 5. Содержимое вкладки
+        // Ингредиенты (чеклист)
         SectionHeader(
-            title = stringResource(tabs[selectedTab]),
+            title = stringResource(R.string.section_ingredients),
             isAdmin = isAdmin,
             onEdit = placeholder::notifyPlaceholder
         )
-        if (selectedTab == 0) {
-            ingredients.forEach { res ->
-                ListItem(headlineContent = { Text(stringResource(res)) })
+        ingredients.forEachIndexed { index, res ->
+            val checked = index in checkedIngredients
+            val toggle = {
+                checkedIngredients =
+                    if (checked) checkedIngredients - index else checkedIngredients + index
             }
-        } else {
-            steps.forEachIndexed { index, res ->
-                val done = index in doneSteps
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = stringResource(res),
-                            textDecoration = if (done) TextDecoration.LineThrough else null
-                        )
-                    },
-                    leadingContent = {
-                        Checkbox(
-                            checked = done,
-                            onCheckedChange = {
-                                doneSteps = if (it) doneSteps + index else doneSteps - index
-                            }
-                        )
-                    }
-                )
+            ListItem(
+                modifier = Modifier.clickable { toggle() },
+                headlineContent = {
+                    Text(
+                        text = stringResource(res),
+                        textDecoration = if (checked) TextDecoration.LineThrough else null
+                    )
+                },
+                leadingContent = {
+                    Checkbox(checked = checked, onCheckedChange = { toggle() })
+                }
+            )
+        }
+
+        // Кнопка «Начать готовить» (когда отмечены все ингредиенты)
+        AnimatedVisibility(visible = allChecked) {
+            Button(
+                onClick = onStartCooking,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                Text(stringResource(R.string.start_cooking))
             }
         }
-        // 6. Удаление (только админ)
+
+        // Удаление (только админ)
         AnimatedVisibility(visible = isAdmin) {
             Column {
                 Spacer(Modifier.height(16.dp))
@@ -172,6 +208,7 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
             }
         }
     }
+
     // Диалог подтверждения удаления
     if (showDeleteDialog) {
         AlertDialog(
@@ -181,7 +218,8 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    placeholder.notifyPlaceholder() // здесь должен быть возврат на главную
+                    placeholder.notifyPlaceholder()
+                    onRecipeDeleted()
                 }) {
                     Text(
                         text = stringResource(R.string.confirm),
@@ -197,6 +235,7 @@ fun RecipeScreen(isAdmin: Boolean, modifier: Modifier = Modifier) {
         )
     }
 }
+
 /** Заголовок блока; иконка редактирования видна только админу. */
 @Composable
 private fun SectionHeader(title: String, isAdmin: Boolean, onEdit: () -> Unit) {
