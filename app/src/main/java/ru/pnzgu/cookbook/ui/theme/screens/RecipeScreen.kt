@@ -49,10 +49,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import ru.pnzgu.cookbook.R
+import ru.pnzgu.cookbook.data.Recipe
 import ru.pnzgu.cookbook.ui.theme.common.snackbar
 
 @Composable
 fun RecipeScreen(
+    recipe: Recipe,
     isAdmin: Boolean,
     isFavorite: Boolean,
     onFavoriteChange: (Boolean) -> Unit,
@@ -65,11 +67,7 @@ fun RecipeScreen(
 
     val placeholder = MaterialTheme.snackbar
 
-    val ingredients = listOf(
-        R.string.ingredient_flour, R.string.ingredient_milk,
-        R.string.ingredient_eggs, R.string.ingredient_cheese
-    )
-    val allChecked = checkedIngredients.size == ingredients.size
+    val allChecked = checkedIngredients.size == recipe.ingredients.size
 
     Column(
         modifier = modifier
@@ -81,8 +79,8 @@ fun RecipeScreen(
         Card(modifier = Modifier.fillMaxWidth()) {
             Box {
                 Image(
-                    painter = painterResource(R.drawable.pancakes),
-                    contentDescription = stringResource(R.string.recipe_image_desc),
+                    painter = painterResource(recipe.imageRes),
+                    contentDescription = stringResource(recipe.titleRes),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -107,7 +105,7 @@ fun RecipeScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             AssistChip(
                 onClick = placeholder::notifyPlaceholder,
-                label = { Text(stringResource(R.string.cooking_time_minutes, 40)) },
+                label = { Text(stringResource(R.string.cooking_time_minutes, recipe.cookingMinutes)) },
                 leadingIcon = { Icon(Icons.Filled.Timer, contentDescription = null) }
             )
             Spacer(Modifier.width(8.dp))
@@ -141,7 +139,7 @@ fun RecipeScreen(
             onEdit = placeholder::notifyPlaceholder
         )
         Text(
-            text = stringResource(R.string.recipe_description),
+            text = stringResource(recipe.descriptionRes),
             style = MaterialTheme.typography.bodyLarge
         )
 
@@ -155,7 +153,10 @@ fun RecipeScreen(
             isAdmin = isAdmin,
             onEdit = placeholder::notifyPlaceholder
         )
-        ingredients.forEachIndexed { index, res ->
+
+        Spacer(Modifier.height(8.dp))
+
+        recipe.ingredients.forEachIndexed { index, res ->
             val checked = index in checkedIngredients
             val toggle = {
                 checkedIngredients =

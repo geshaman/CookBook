@@ -33,4 +33,5 @@
     <string name="section_ingredients">Ingredients</string>
     <string name="favorites_empty">List of favorites is empty</string>
     <string name="add_recipe">Add recipe</string>
+    <string name="default_recipe_title">Recipe</string>
 </resources>

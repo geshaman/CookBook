@@ -3,7 +3,6 @@ package ru.pnzgu.cookbook.ui.theme.screens
 import android.os.VibrationEffect
 import android.os.Vibrator
 import ru.pnzgu.cookbook.R
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,18 +32,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-
-data class Step(@StringRes val textRes: Int, val timerSeconds: Int? = null)
-
+import ru.pnzgu.cookbook.data.Recipe
 @Composable
-fun CookingScreen(modifier: Modifier = Modifier) {
+fun CookingScreen(recipe: Recipe, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var completedSteps by rememberSaveable { mutableIntStateOf(0) }
-    val steps = listOf(
-        Step(R.string.step_1),
-        Step(R.string.step_2, timerSeconds = 120),
-        Step(R.string.step_3)
-    )
 
     Column(
         modifier = modifier
@@ -52,7 +44,7 @@ fun CookingScreen(modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        steps.forEachIndexed { index, step ->
+        recipe.steps.forEachIndexed { index, step ->
             AnimatedVisibility(visible = index <= completedSteps) {
                 ListItem(
                     headlineContent = {

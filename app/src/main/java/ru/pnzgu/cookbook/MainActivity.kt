@@ -37,8 +37,11 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ru.pnzgu.cookbook.ui.theme.common.LocalPlaceholderNotifier
@@ -48,8 +51,12 @@ import ru.pnzgu.cookbook.ui.theme.screens.CookingScreen
 import ru.pnzgu.cookbook.ui.theme.screens.RecipeScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import ru.pnzgu.cookbook.ui.theme.screens.HomeScreen
 import ru.pnzgu.cookbook.ui.theme.screens.FavoritesScreen
+import ru.pnzgu.cookbook.data.sampleRecipes
+import ru.pnzgu.cookbook.data.findRecipe
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,9 +71,12 @@ class MainActivity : ComponentActivity() {
 
 object Routes {
     const val HOME = "home"
+    const val HOME_GRAPH = "home_graph"
     const val FAVORITES = "favorites"
-    const val RECIPE = "recipe"
-    const val COOKING = "cooking"
+    const val FAVORITES_GRAPH = "favorites_graph"
+    const val RECIPE = "recipe/{recipeId}"
+    const val COOKING = "cooking/{recipeId}"
+
 }
 
 private fun NavHostController.navigateTopLevel(route: String) {
@@ -74,6 +84,39 @@ private fun NavHostController.navigateTopLevel(route: String) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+private fun NavGraphBuilder.recipeDestinations(
+    prefix: String,
+    rootRoute: String,
+    navController: NavHostController,
+    isAdmin: Boolean,
+    favoriteIds: Set<Int>,
+    onFavoriteChange: (Int, Boolean) -> Unit
+) {
+    composable(
+        route = "$prefix/${Routes.RECIPE}",
+        arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
+    ) { entry ->
+        val recipe = findRecipe(entry.arguments?.getInt("recipeId") ?: -1)
+            ?: return@composable
+        RecipeScreen(
+            recipe = recipe,
+            isAdmin = isAdmin,
+            isFavorite = recipe.id in favoriteIds,
+            onFavoriteChange = { onFavoriteChange(recipe.id, it) },
+            onStartCooking = { navController.navigate("$prefix/cooking/${recipe.id}") },
+            onRecipeDeleted = { navController.popBackStack(rootRoute, inclusive = false) }
+        )
+    }
+    composable(
+        route = "$prefix/${Routes.COOKING}",
+        arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
+    ) { entry ->
+        val recipe = findRecipe(entry.arguments?.getInt("recipeId") ?: -1)
+            ?: return@composable
+        CookingScreen(recipe = recipe)
     }
 }
 
@@ -95,8 +138,14 @@ fun CookBookApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val destination = backStackEntry?.destination
+    val inFavorites = destination?.hierarchy?.any { it.route == Routes.FAVORITES_GRAPH } == true
+    val inHome = !inFavorites
 
-    var isFavorite by rememberSaveable { mutableStateOf(false) }
+    var favoriteIds by rememberSaveable { mutableStateOf(setOf<Int>()) }
+    val onFavoriteChange = { id: Int, fav: Boolean ->
+        favoriteIds = if (fav) favoriteIds + id else favoriteIds - id
+    }
 
     var isAdmin by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -122,7 +171,7 @@ fun CookBookApp() {
                                 when (currentRoute) {
                                     Routes.HOME -> R.string.app_name
                                     Routes.FAVORITES -> R.string.nav_favorites
-                                    else -> R.string.recipe_title
+                                    else -> R.string.default_recipe_title
                                 }
                             )
                         )
@@ -141,52 +190,51 @@ fun CookBookApp() {
             bottomBar = {
                 NavigationBar {
                     NavigationBarItem(
-                        selected = currentRoute != Routes.FAVORITES,
+                        selected = inHome,
                         onClick = {
-                            if (!navController.popBackStack(Routes.HOME, inclusive = false)) {
-                                navController.navigateTopLevel(Routes.HOME)
-                            }
-                          },
+                            if (inHome) navController.popBackStack(Routes.HOME, inclusive = false)
+                            else navController.navigateTopLevel(Routes.HOME_GRAPH)
+                        },
                         icon = { Icon(Icons.Filled.Home, contentDescription = null) },
                         label = { Text(stringResource(R.string.nav_home)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.FAVORITES,
-                        onClick = { navController.navigateTopLevel(Routes.FAVORITES) },
+                        selected = inFavorites,
+                        onClick = {
+                            if (inFavorites) navController.popBackStack(Routes.FAVORITES, inclusive = false)
+                            else navController.navigateTopLevel(Routes.FAVORITES_GRAPH)
+                        },
                         icon = { Icon(Icons.Filled.Favorite, contentDescription = null) },
                         label = { Text(stringResource(R.string.nav_favorites)) }
                     )
                 }
             }
-    ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable(Routes.HOME) {
-                HomeScreen(onRecipeClick = { navController.navigate(Routes.RECIPE) })
-            }
-            composable(Routes.FAVORITES) {
-                FavoritesScreen(
-                    isFavorite = isFavorite,
-                    onRecipeClick = { navController.navigate(Routes.RECIPE) }
-                )
-            }
-            composable(Routes.RECIPE) {
-                RecipeScreen(
-                    isAdmin = isAdmin,
-                    isFavorite = isFavorite,
-                    onFavoriteChange = { isFavorite = it },
-                    onStartCooking = { navController.navigate(Routes.COOKING)},
-                    onRecipeDeleted = {navController.popBackStack(Routes.HOME, inclusive = false) }
-                )
-            }
-            composable(Routes.COOKING) {
-                CookingScreen()
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HOME_GRAPH,
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                navigation(startDestination = Routes.HOME, route = Routes.HOME_GRAPH) {
+                    composable(Routes.HOME) {
+                        HomeScreen(
+                            recipes = sampleRecipes,
+                            onRecipeClick = { id -> navController.navigate("${Routes.HOME_GRAPH}/recipe/$id") }
+                        )
+                    }
+                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, isAdmin, favoriteIds, onFavoriteChange)
+                }
+                navigation(startDestination = Routes.FAVORITES, route = Routes.FAVORITES_GRAPH) {
+                    composable(Routes.FAVORITES) {
+                        FavoritesScreen(
+                            recipes = sampleRecipes.filter { it.id in favoriteIds },
+                            onRecipeClick = { id -> navController.navigate("${Routes.FAVORITES_GRAPH}/recipe/$id") }
+                        )
+                    }
+                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, isAdmin, favoriteIds, onFavoriteChange)
+                }
             }
         }
-    }
     }
 }
 
