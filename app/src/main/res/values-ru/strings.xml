@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CookBook</string>
-    <string name="recipe_description">Тонкие блинчики с нежной творожной начинкой</string>
+    <string name="pancake_description">Тонкие блинчики с нежной творожной начинкой</string>
     <string name="tab_ingredients">Ингредиенты</string>
-    <string name="recipe_title">Блины с творогом</string>
+    <string name="pancake_title">Блины с творогом</string>
     <string name="role_admin">Админ</string>
     <string name="nav_home">Главная</string>
     <string name="nav_favorites">Избранное</string>
@@ -16,13 +16,13 @@
     <string name="edit">Изменить</string>
     <string name="section_description">Описание</string>
     <string name="tab_steps">Шаги</string>
-    <string name="ingredient_flour">Мука, 200 г.</string>
-    <string name="ingredient_milk">Молоко, 500 мл.</string>
-    <string name="ingredient_eggs">Яйца, 2 шт.</string>
-    <string name="ingredient_cheese">Творог, 300 г.</string>
-    <string name="step_1">Смешайте муку, молоко и яйца до однородного теста</string>
-    <string name="step_2">Обжарьте тонкие блинчики с двух сторон.</string>
-    <string name="step_3">Заверните творог в блинчики.</string>
+    <string name="pancake_ingredient_flour">Мука, 200 г.</string>
+    <string name="pancake_ingredient_milk">Молоко, 500 мл.</string>
+    <string name="pancake_ingredient_eggs">Яйца, 2 шт.</string>
+    <string name="pancake_ingredient_cheese">Творог, 300 г.</string>
+    <string name="pancake_step_1">Смешайте муку, молоко и яйца до однородного теста</string>
+    <string name="pancake_step_2">Обжарьте тонкие блинчики с двух сторон.</string>
+    <string name="pancake_step_3">Заверните творог в блинчики.</string>
     <string name="delete_recipe">Удалить рецепт</string>
     <string name="delete_dialog_title">Удалить этот рецепт?</string>
     <string name="delete_dialog_text">Это действие нельзя отменить.</string>
@@ -35,4 +35,33 @@
     <string name="favorites_empty">Список пуст</string>
     <string name="add_recipe">Add recipe</string>
     <string name="default_recipe_title">Рецепт</string>
+    <string name="bolognese_title">Паста Болоньезе</string>
+    <string name="bolognese_description">Вкуснейшая паста с густым, насыщенным мясным соусом рагу</string>
+    <string name="bolognese_ingredient_onion">Лук репчатый, 1 шт.</string>
+    <string name="bolognese_ingredient_garlic">Чеснок, 2 зубчика</string>
+    <string name="bolognese_ingredient_olive_oil">Оливковое масло, 2 ст. л.</string>
+    <string name="bolognese_ingredient_meat">Мясной фарш, 600 г.</string>
+    <string name="bolognese_ingredient_sweet_pepper">Сладкий перец, 2 шт.</string>
+    <string name="bolognese_ingredient_tomatoes">Помидоры 500 г.</string>
+    <string name="bolognese_ingredient_spaghetti">Спаггети, 250 г.</string>
+    <string name="bolognese_ingredient_cheese">Тёртый сыр 100 г.</string>
+    <string name="bolognese_step_1">Приготовьте соус для спагетти болоньезе. Для этого лук с чесноком очистите. Лук разрежьте на половинки, затем нарежьте мелкими кубиками. Зубчики чеснока раздавите плоской стороной ножа и порубите.</string>
+    <string name="bolognese_step_2">В большую сковороду налейте оливковое масло и нагрейте его. Выложите нарезанные лук с чесноком и, помешивая, жарьте на среднем огне до легкого подрумянивания.</string>
+    <string name="bolognese_step_3">К луку с чесноком добавьте фарш и, помешивая вилкой (чтобы не образовывались комочки), жарьте на сковороде на среднем огне в течение 10 минут.</string>
+    <string name="bolognese_step_4">Сладкий перец, удалив семена и перегородки, нарежьте маленькими кубиками. Добавьте в сковороду к мясу и, помешивая, жарьте 5 минут. Следите, чтобы перец не подгорел.</string>
+    <string name="bolognese_step_5">Помидоры очистите и переложите в чашу блендера. Измельчите на высокой скорости, затем добавьте в сковороду к мясу с овощами. Посолите и поперчите. Добавьте пряные травы по вкусу и тушите соус болоньезе на маленьком огне 20 минут.</string>
+    <string name="bolognese_step_6">"Приготовьте спагетти. Для этого в большой кастрюле доведите до кипения воду и немного посолите ее. Опустите в нее спагетти, не разламывая. Делайте это постепенно, по мере размягчения погруженной в воду части. Варите 10 минут.  "</string>
+    <string name="bolognese_step_7">Готовые спагетти откиньте на дуршлаг и дайте стечь жидкости. Промывать их не надо: так паста будет лучше соединяться с соусом. Но добавить столовую ложку оливкового масла можно.</string>
+    <string name="bolognese_step_8">Спагетти положите в соус болоньезе и перемешайте. Прогрейте на сковороде все вместе. Затем разложите по порционным тарелкам и посыпьте тертым сыром. Сразу подайте на стол.</string>
+    <string name="omelet_title">Омлет с сыром</string>
+    <string name="omelet_description">Пышный омлет с расплавленным сыром, готовится за 10 минут.</string>
+    <string name="omelet_ing_eggs">Яйца, 3 шт.</string>
+    <string name="omelet_ing_milk">Молоко, 50 мл</string>
+    <string name="omelet_ing_cheese">Сыр, 50 г</string>
+    <string name="omelet_ing_butter">Сливочное масло, 10 г</string>
+    <string name="omelet_step_1">Взбейте яйца с молоком и щепоткой соли.</string>
+    <string name="omelet_step_2">Растопите масло на сковороде и влейте яичную смесь.</string>
+    <string name="omelet_step_3">Готовьте под крышкой на небольшом огне.</string>
+    <string name="omelet_step_4">Посыпьте тёртым сыром и сложите омлет пополам.</string>
+
 </resources>
