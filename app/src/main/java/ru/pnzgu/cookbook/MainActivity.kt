@@ -22,11 +22,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -37,6 +34,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
@@ -55,8 +54,9 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import ru.pnzgu.cookbook.ui.theme.screens.HomeScreen
 import ru.pnzgu.cookbook.ui.theme.screens.FavoritesScreen
-import ru.pnzgu.cookbook.data.sampleRecipes
 import ru.pnzgu.cookbook.data.findRecipe
+import ru.pnzgu.cookbook.ui.theme.RecipesViewModel
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,21 +91,20 @@ private fun NavGraphBuilder.recipeDestinations(
     prefix: String,
     rootRoute: String,
     navController: NavHostController,
-    isAdmin: Boolean,
-    favoriteIds: Set<Int>,
-    onFavoriteChange: (Int, Boolean) -> Unit
+    viewModel: RecipesViewModel
 ) {
     composable(
         route = "$prefix/${Routes.RECIPE}",
         arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
     ) { entry ->
+        val state by viewModel.state.collectAsStateWithLifecycle()
         val recipe = findRecipe(entry.arguments?.getInt("recipeId") ?: -1)
             ?: return@composable
         RecipeScreen(
             recipe = recipe,
-            isAdmin = isAdmin,
-            isFavorite = recipe.id in favoriteIds,
-            onFavoriteChange = { onFavoriteChange(recipe.id, it) },
+            isAdmin = state.isAdmin,
+            isFavorite = recipe.id in state.favoriteIds,
+            onFavoriteChange = { viewModel.toggleFavorite(recipe.id, it) },
             onStartCooking = { navController.navigate("$prefix/cooking/${recipe.id}") },
             onRecipeDeleted = { navController.popBackStack(rootRoute, inclusive = false) }
         )
@@ -122,7 +121,9 @@ private fun NavGraphBuilder.recipeDestinations(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CookBookApp() {
+fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val message = stringResource(R.string.notice_not_implemented)
@@ -142,12 +143,6 @@ fun CookBookApp() {
     val inFavorites = destination?.hierarchy?.any { it.route == Routes.FAVORITES_GRAPH } == true
     val inHome = !inFavorites
 
-    var favoriteIds by rememberSaveable { mutableStateOf(setOf<Int>()) }
-    val onFavoriteChange = { id: Int, fav: Boolean ->
-        favoriteIds = if (fav) favoriteIds + id else favoriteIds - id
-    }
-
-    var isAdmin by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     CompositionLocalProvider(LocalPlaceholderNotifier provides notifier) {
@@ -155,7 +150,7 @@ fun CookBookApp() {
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
-                AnimatedVisibility(visible = isAdmin && currentRoute == Routes.HOME) {
+                AnimatedVisibility(visible = state.isAdmin && currentRoute == Routes.HOME) {
                     ExtendedFloatingActionButton(
                         onClick = notifier::notifyPlaceholder,
                         icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -180,7 +175,7 @@ fun CookBookApp() {
                         if (currentRoute != Routes.FAVORITES) {
                             Text(stringResource(R.string.role_admin))
                             Spacer(Modifier.width(8.dp))
-                            Switch(checked = isAdmin, onCheckedChange = { isAdmin = it })
+                            Switch(checked = state.isAdmin, onCheckedChange = viewModel::setAdmin )
                             Spacer(Modifier.width(8.dp))
                         }
                     },
@@ -217,21 +212,23 @@ fun CookBookApp() {
             ) {
                 navigation(startDestination = Routes.HOME, route = Routes.HOME_GRAPH) {
                     composable(Routes.HOME) {
+                        val state by viewModel.state.collectAsStateWithLifecycle()
                         HomeScreen(
-                            recipes = sampleRecipes,
+                            recipes = state.recipes,
                             onRecipeClick = { id -> navController.navigate("${Routes.HOME_GRAPH}/recipe/$id") }
                         )
                     }
-                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, isAdmin, favoriteIds, onFavoriteChange)
+                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, viewModel)
                 }
                 navigation(startDestination = Routes.FAVORITES, route = Routes.FAVORITES_GRAPH) {
                     composable(Routes.FAVORITES) {
+                        val state by viewModel.state.collectAsStateWithLifecycle()
                         FavoritesScreen(
-                            recipes = sampleRecipes.filter { it.id in favoriteIds },
+                            recipes = state.recipes.filter { it.id in state.favoriteIds },
                             onRecipeClick = { id -> navController.navigate("${Routes.FAVORITES_GRAPH}/recipe/$id") }
                         )
                     }
-                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, isAdmin, favoriteIds, onFavoriteChange)
+                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, viewModel)
                 }
             }
         }
