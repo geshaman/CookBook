@@ -1,6 +1,5 @@
 package ru.pnzgu.cookbook.ui.theme.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,9 +16,9 @@ import ru.pnzgu.cookbook.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import ru.pnzgu.cookbook.data.Recipe
 
 @Composable
@@ -38,14 +37,14 @@ fun HomeScreen(recipes: List<Recipe>, onRecipeClick: (Int) -> Unit, modifier: Mo
 @Composable
 fun RecipeCard(recipe: Recipe, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-        Image(
-            painter = painterResource(recipe.imageRes),
-            contentDescription = stringResource(recipe.titleRes),
+        AsyncImage(
+            model = recipe.imageUrl,
+            contentDescription = recipe.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth().height(160.dp)
         )
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(recipe.titleRes), style = MaterialTheme.typography.titleLarge)
+            Text(text = recipe.title, style = MaterialTheme.typography.titleLarge)
             Text(
                 stringResource(R.string.cooking_time_minutes, recipe.cookingMinutes),
                 style = MaterialTheme.typography.bodyMedium

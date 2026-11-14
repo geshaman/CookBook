@@ -63,5 +63,6 @@
     <string name="omelet_step_2">Растопите масло на сковороде и влейте яичную смесь.</string>
     <string name="omelet_step_3">Готовьте под крышкой на небольшом огне.</string>
     <string name="omelet_step_4">Посыпьте тёртым сыром и сложите омлет пополам.</string>
+    <string name="retry">Повторить</string>
 
 </resources>

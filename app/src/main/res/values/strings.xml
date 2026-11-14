@@ -62,4 +62,5 @@
     <string name="omelet_step_2">Melt the butter in a pan and pour in the egg mixture.</string>
     <string name="omelet_step_3">Cook covered over low heat.</string>
     <string name="omelet_step_4">Sprinkle with grated cheese and fold the omelet in half.</string>
+    <string name="retry">Retry</string>
 </resources>

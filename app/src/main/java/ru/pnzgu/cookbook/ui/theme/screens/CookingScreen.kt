@@ -49,7 +49,7 @@ fun CookingScreen(recipe: Recipe, modifier: Modifier = Modifier) {
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = stringResource(step.textRes),
+                            text = step.text,
                             textDecoration = if (index < completedSteps) TextDecoration.LineThrough else null
                         )
                     },

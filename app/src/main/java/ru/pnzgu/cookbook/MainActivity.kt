@@ -37,6 +37,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
@@ -57,6 +59,8 @@ import ru.pnzgu.cookbook.ui.theme.screens.HomeScreen
 import ru.pnzgu.cookbook.ui.theme.screens.FavoritesScreen
 import ru.pnzgu.cookbook.data.sampleRecipes
 import ru.pnzgu.cookbook.data.findRecipe
+import ru.pnzgu.cookbook.ui.theme.RecipesViewModel
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,7 +126,11 @@ private fun NavGraphBuilder.recipeDestinations(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CookBookApp() {
+fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val message = stringResource(R.string.notice_not_implemented)
@@ -142,12 +150,6 @@ fun CookBookApp() {
     val inFavorites = destination?.hierarchy?.any { it.route == Routes.FAVORITES_GRAPH } == true
     val inHome = !inFavorites
 
-    var favoriteIds by rememberSaveable { mutableStateOf(setOf<Int>()) }
-    val onFavoriteChange = { id: Int, fav: Boolean ->
-        favoriteIds = if (fav) favoriteIds + id else favoriteIds - id
-    }
-
-    var isAdmin by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     CompositionLocalProvider(LocalPlaceholderNotifier provides notifier) {
@@ -180,7 +182,7 @@ fun CookBookApp() {
                         if (currentRoute != Routes.FAVORITES) {
                             Text(stringResource(R.string.role_admin))
                             Spacer(Modifier.width(8.dp))
-                            Switch(checked = isAdmin, onCheckedChange = { isAdmin = it })
+                            Switch(checked = isAdmin, onCheckedChange = { viewModel::setAdmin })
                             Spacer(Modifier.width(8.dp))
                         }
                     },
@@ -222,7 +224,7 @@ fun CookBookApp() {
                             onRecipeClick = { id -> navController.navigate("${Routes.HOME_GRAPH}/recipe/$id") }
                         )
                     }
-                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, isAdmin, favoriteIds, onFavoriteChange)
+                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, isAdmin, favoriteIds, viewModel::toggleFavorite)
                 }
                 navigation(startDestination = Routes.FAVORITES, route = Routes.FAVORITES_GRAPH) {
                     composable(Routes.FAVORITES) {
@@ -231,7 +233,7 @@ fun CookBookApp() {
                             onRecipeClick = { id -> navController.navigate("${Routes.FAVORITES_GRAPH}/recipe/$id") }
                         )
                     }
-                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, isAdmin, favoriteIds, onFavoriteChange)
+                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, isAdmin, favoriteIds, viewModel::toggleFavorite)
                 }
             }
         }
