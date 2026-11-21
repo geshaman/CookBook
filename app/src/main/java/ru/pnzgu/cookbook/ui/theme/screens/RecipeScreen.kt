@@ -1,7 +1,6 @@
 package ru.pnzgu.cookbook.ui.theme.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,10 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import ru.pnzgu.cookbook.R
 import ru.pnzgu.cookbook.data.Recipe
 import ru.pnzgu.cookbook.ui.theme.common.snackbar
@@ -78,9 +77,9 @@ fun RecipeScreen(
         // Картинка + кнопка редактирования для админа
         Card(modifier = Modifier.fillMaxWidth()) {
             Box {
-                Image(
-                    painter = painterResource(recipe.imageRes),
-                    contentDescription = stringResource(recipe.titleRes),
+                AsyncImage(
+                    model = recipe.imageUrl,
+                    contentDescription = recipe.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -139,7 +138,7 @@ fun RecipeScreen(
             onEdit = placeholder::notifyPlaceholder
         )
         Text(
-            text = stringResource(recipe.descriptionRes),
+            text = recipe.description,
             style = MaterialTheme.typography.bodyLarge
         )
 
@@ -156,7 +155,7 @@ fun RecipeScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        recipe.ingredients.forEachIndexed { index, res ->
+        recipe.ingredients.forEachIndexed { index, ingredient ->
             val checked = index in checkedIngredients
             val toggle = {
                 checkedIngredients =
@@ -166,7 +165,7 @@ fun RecipeScreen(
                 modifier = Modifier.clickable { toggle() },
                 headlineContent = {
                     Text(
-                        text = stringResource(res),
+                        text = ingredient,
                         textDecoration = if (checked) TextDecoration.LineThrough else null
                     )
                 },

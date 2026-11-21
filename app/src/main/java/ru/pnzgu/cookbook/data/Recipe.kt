@@ -6,6 +6,6 @@ data class Recipe(
     val description: String,
     val imageUrl: String,
     val cookingMinutes: Int,
-    val ingredients: List<String>,   // id строк
+    val ingredients: List<String>,
     val steps: List<Step>
 )

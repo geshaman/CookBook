@@ -5,10 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,20 +33,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import ru.pnzgu.cookbook.ui.theme.CookBookTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,22 +47,22 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navigation
+import ru.pnzgu.cookbook.ui.theme.CookBookTheme
+import ru.pnzgu.cookbook.ui.theme.AppUiState
+import ru.pnzgu.cookbook.ui.theme.RecipesViewModel
 import ru.pnzgu.cookbook.ui.theme.common.LocalPlaceholderNotifier
 import ru.pnzgu.cookbook.ui.theme.common.PlaceholderNotifier
 import ru.pnzgu.cookbook.ui.theme.common.showNotImplemented
 import ru.pnzgu.cookbook.ui.theme.screens.CookingScreen
-import ru.pnzgu.cookbook.ui.theme.screens.RecipeScreen
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import androidx.navigation.navigation
-import ru.pnzgu.cookbook.ui.theme.screens.HomeScreen
 import ru.pnzgu.cookbook.ui.theme.screens.FavoritesScreen
-import ru.pnzgu.cookbook.data.sampleRecipes
-import ru.pnzgu.cookbook.data.findRecipe
-import ru.pnzgu.cookbook.ui.theme.RecipesViewModel
+import ru.pnzgu.cookbook.ui.theme.screens.HomeScreen
+import ru.pnzgu.cookbook.ui.theme.screens.RecipeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,7 +83,6 @@ object Routes {
     const val FAVORITES_GRAPH = "favorites_graph"
     const val RECIPE = "recipe/{recipeId}"
     const val COOKING = "cooking/{recipeId}"
-
 }
 
 private fun NavHostController.navigateTopLevel(route: String) {
@@ -91,62 +93,85 @@ private fun NavHostController.navigateTopLevel(route: String) {
     }
 }
 
+/** Крутилка, ошибка с кнопкой «Повторить» или само содержимое. */
+@Composable
+private fun LoadingContent(
+    state: AppUiState,
+    onRetry: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val error = state.error
+    when {
+        state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        error != null -> Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(error)
+            Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+        }
+        else -> content()
+    }
+}
+
 private fun NavGraphBuilder.recipeDestinations(
     prefix: String,
     rootRoute: String,
     navController: NavHostController,
-    isAdmin: Boolean,
-    favoriteIds: Set<Int>,
-    onFavoriteChange: (Int, Boolean) -> Unit
+    viewModel: RecipesViewModel
 ) {
     composable(
         route = "$prefix/${Routes.RECIPE}",
         arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
     ) { entry ->
-        val recipe = findRecipe(entry.arguments?.getInt("recipeId") ?: -1)
-            ?: return@composable
-        RecipeScreen(
-            recipe = recipe,
-            isAdmin = isAdmin,
-            isFavorite = recipe.id in favoriteIds,
-            onFavoriteChange = { onFavoriteChange(recipe.id, it) },
-            onStartCooking = { navController.navigate("$prefix/cooking/${recipe.id}") },
-            onRecipeDeleted = { navController.popBackStack(rootRoute, inclusive = false) }
-        )
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val id = entry.arguments?.getInt("recipeId")
+        LoadingContent(state, viewModel::load) {
+            val recipe = state.recipes.find { it.id == id }
+            if (recipe != null) {
+                RecipeScreen(
+                    recipe = recipe,
+                    isAdmin = state.isAdmin,
+                    isFavorite = recipe.id in state.favoriteIds,
+                    onFavoriteChange = { viewModel.toggleFavorite(recipe.id, it) },
+                    onStartCooking = { navController.navigate("$prefix/cooking/${recipe.id}") },
+                    onRecipeDeleted = { navController.popBackStack(rootRoute, inclusive = false) }
+                )
+            }
+        }
     }
     composable(
         route = "$prefix/${Routes.COOKING}",
         arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
     ) { entry ->
-        val recipe = findRecipe(entry.arguments?.getInt("recipeId") ?: -1)
-            ?: return@composable
-        CookingScreen(recipe = recipe)
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val id = entry.arguments?.getInt("recipeId")
+        LoadingContent(state, viewModel::load) {
+            val recipe = state.recipes.find { it.id == id }
+            if (recipe != null) CookingScreen(recipe = recipe)
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
-    val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val message = stringResource(R.string.notice_not_implemented)
     val notifier = remember(message, snackbarHostState) {
-        PlaceholderNotifier {
-            scope.showNotImplemented(
-                snackbarHostState,
-                message
-            )
-        }
+        PlaceholderNotifier { scope.showNotImplemented(snackbarHostState, message) }
     }
 
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
     val destination = backStackEntry?.destination
+    val currentRoute = destination?.route
     val inFavorites = destination?.hierarchy?.any { it.route == Routes.FAVORITES_GRAPH } == true
     val inHome = !inFavorites
 
@@ -157,7 +182,7 @@ fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
-                AnimatedVisibility(visible = isAdmin && currentRoute == Routes.HOME) {
+                AnimatedVisibility(visible = state.isAdmin && currentRoute == Routes.HOME) {
                     ExtendedFloatingActionButton(
                         onClick = notifier::notifyPlaceholder,
                         icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -182,7 +207,7 @@ fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
                         if (currentRoute != Routes.FAVORITES) {
                             Text(stringResource(R.string.role_admin))
                             Spacer(Modifier.width(8.dp))
-                            Switch(checked = isAdmin, onCheckedChange = { viewModel::setAdmin })
+                            Switch(checked = state.isAdmin, onCheckedChange = viewModel::setAdmin)
                             Spacer(Modifier.width(8.dp))
                         }
                     },
@@ -219,24 +244,33 @@ fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
             ) {
                 navigation(startDestination = Routes.HOME, route = Routes.HOME_GRAPH) {
                     composable(Routes.HOME) {
-                        HomeScreen(
-                            recipes = sampleRecipes,
-                            onRecipeClick = { id -> navController.navigate("${Routes.HOME_GRAPH}/recipe/$id") }
-                        )
+                        val s by viewModel.state.collectAsStateWithLifecycle()
+                        LoadingContent(s, viewModel::load) {
+                            HomeScreen(
+                                recipes = s.recipes,
+                                onRecipeClick = { id ->
+                                    navController.navigate("${Routes.HOME_GRAPH}/recipe/$id")
+                                }
+                            )
+                        }
                     }
-                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, isAdmin, favoriteIds, viewModel::toggleFavorite)
+                    recipeDestinations(Routes.HOME_GRAPH, Routes.HOME, navController, viewModel)
                 }
                 navigation(startDestination = Routes.FAVORITES, route = Routes.FAVORITES_GRAPH) {
                     composable(Routes.FAVORITES) {
-                        FavoritesScreen(
-                            recipes = sampleRecipes.filter { it.id in favoriteIds },
-                            onRecipeClick = { id -> navController.navigate("${Routes.FAVORITES_GRAPH}/recipe/$id") }
-                        )
+                        val s by viewModel.state.collectAsStateWithLifecycle()
+                        LoadingContent(s, viewModel::load) {
+                            FavoritesScreen(
+                                recipes = s.recipes.filter { it.id in s.favoriteIds },
+                                onRecipeClick = { id ->
+                                    navController.navigate("${Routes.FAVORITES_GRAPH}/recipe/$id")
+                                }
+                            )
+                        }
                     }
-                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, isAdmin, favoriteIds, viewModel::toggleFavorite)
+                    recipeDestinations(Routes.FAVORITES_GRAPH, Routes.FAVORITES, navController, viewModel)
                 }
             }
         }
     }
 }
-

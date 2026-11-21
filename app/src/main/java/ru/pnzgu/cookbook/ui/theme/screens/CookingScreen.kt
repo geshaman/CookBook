@@ -77,7 +77,6 @@ fun CookingScreen(recipe: Recipe, modifier: Modifier = Modifier) {
                 )
             }
         }
-
     }
 }
 
