@@ -44,7 +44,7 @@ var recipes = []Recipe{
 		ID:             2,
 		Title:          "Паста Болоньезе",
 		Description:    "Вкуснейшая паста с густым, насыщенным мясным соусом рагу",
-		ImageFile:      "bolon.png",
+		ImageFile:      "bolon.jpg",
 		CookingMinutes: 40,
 		Ingredients: []string{"Лук репчатый, 1 шт.", "Чеснок, 2 зубчика", "Оливковое масло, 2 ст. л.",
 			"Мясной фарш, 600 г.", "Сладкий перец, 2 шт.", "Помидоры 500 г.", "Спаггети, 250 г.", "Тёртый сыр 100 г."},
@@ -83,7 +83,12 @@ func withImageURL(r *http.Request, rec Recipe) Recipe {
 		scheme = "https"
 	}
 	rec.ImageURL = scheme + "://" + r.Host + "/images/" + rec.ImageFile
-
+	if rec.Ingredients == nil {
+		rec.Ingredients = []string{}
+	}
+	if rec.Steps == nil {
+		rec.Steps = []Step{}
+	}
 	return rec
 }
 
