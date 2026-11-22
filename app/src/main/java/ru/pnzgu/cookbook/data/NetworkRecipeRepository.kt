@@ -17,6 +17,6 @@ class NetworkRecipeRepository : RecipeRepository {
     override suspend fun getRecipe(id: Int): Recipe = api.getRecipe(id)
 
     companion object {
-        const val BASE_URL = "https://590bc91fcec06d.app.lhr.life/"
+        const val BASE_URL = "https://cookbook-production-bf89e214.up.railway.app/"
     }
 }
