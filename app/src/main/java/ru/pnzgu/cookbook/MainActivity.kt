@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,8 +57,13 @@ import androidx.navigation.navigation
 import ru.pnzgu.cookbook.ui.theme.CookBookTheme
 import ru.pnzgu.cookbook.ui.theme.AppUiState
 import ru.pnzgu.cookbook.ui.theme.RecipesViewModel
+import ru.pnzgu.cookbook.ui.theme.UiEvent
+import ru.pnzgu.cookbook.ui.theme.common.ErrorNotifier
+import ru.pnzgu.cookbook.ui.theme.common.LocalErrorNotifier
 import ru.pnzgu.cookbook.ui.theme.common.LocalPlaceholderNotifier
 import ru.pnzgu.cookbook.ui.theme.common.PlaceholderNotifier
+import ru.pnzgu.cookbook.ui.theme.common.errorNotifier
+import ru.pnzgu.cookbook.ui.theme.common.showLoadError
 import ru.pnzgu.cookbook.ui.theme.common.showNotImplemented
 import ru.pnzgu.cookbook.ui.theme.screens.CookingScreen
 import ru.pnzgu.cookbook.ui.theme.screens.FavoritesScreen
@@ -93,26 +99,20 @@ private fun NavHostController.navigateTopLevel(route: String) {
     }
 }
 
-/** Крутилка, ошибка с кнопкой «Повторить» или само содержимое. */
+/** Крутилка, ошибка с кнопкой "Повторить" или само содержимое. */
 @Composable
 private fun LoadingContent(
     state: AppUiState,
     onRetry: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val error = state.error
     when {
-        state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+        state.isLoading && state.recipes.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
             CircularProgressIndicator()
         }
-        error != null -> Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(error)
-            Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
-        }
+        !state.isLoading && state.recipes.isEmpty() -> Column {
+            Text(stringResource(R.string.empty_list));
+            Button(onClick = onRetry) {Text(stringResource(R.string.retry)) }}
         else -> content()
     }
 }
@@ -167,6 +167,11 @@ fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
     val notifier = remember(message, snackbarHostState) {
         PlaceholderNotifier { scope.showNotImplemented(snackbarHostState, message) }
     }
+    val loadErrorMessage = stringResource(R.string.load_error)
+    val errorNotifier = remember(loadErrorMessage, snackbarHostState) {
+        ErrorNotifier { scope.showLoadError(snackbarHostState, loadErrorMessage)}
+    }
+
 
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -176,8 +181,19 @@ fun CookBookApp(viewModel: RecipesViewModel = viewModel()) {
     val inHome = !inFavorites
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-
-    CompositionLocalProvider(LocalPlaceholderNotifier provides notifier) {
+    
+    CompositionLocalProvider(
+        LocalPlaceholderNotifier provides notifier,
+        LocalErrorNotifier provides errorNotifier
+        ) {
+        val currentErrorNotifier = MaterialTheme.errorNotifier
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    UiEvent.LoadFailed -> currentErrorNotifier.notifyLoadError()
+                }
+            }
+        }
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             snackbarHost = { SnackbarHost(snackbarHostState) },
