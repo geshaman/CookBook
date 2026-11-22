@@ -64,5 +64,7 @@
     <string name="omelet_step_3">Готовьте под крышкой на небольшом огне.</string>
     <string name="omelet_step_4">Посыпьте тёртым сыром и сложите омлет пополам.</string>
     <string name="retry">Повторить</string>
+    <string name="load_error">Не удалось загрузить рецепты</string>
+    <string name="empty_list">Пусто</string>
 
 </resources>

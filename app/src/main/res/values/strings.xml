@@ -63,4 +63,6 @@
     <string name="omelet_step_3">Cook covered over low heat.</string>
     <string name="omelet_step_4">Sprinkle with grated cheese and fold the omelet in half.</string>
     <string name="retry">Retry</string>
+    <string name="load_error">Failed to load recipes</string>
+    <string name="empty_list">Empty</string>
 </resources>
