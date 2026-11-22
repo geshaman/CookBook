@@ -1,5 +1,8 @@
 package ru.pnzgu.cookbook.data
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Recipe(
     val id: Int,
     val title: String,
